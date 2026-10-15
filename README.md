@@ -15,7 +15,8 @@ The project implements pipelines to:
 improve_llm_pghd/
 ├── data/
 │   ├── raw/
-│   │   └── PDFs/                    # Original PDF files organized by disease
+│   │   ├── PDFs/                    # Original PDF files organized by disease
+│   │   └── PDFs_update/             # Updated PDF set (used by the conversion script)
 │   │       ├── Cardiovascular disease/
 │   │       ├── Chronic inflammation/
 │   │       ├── Neurology/
@@ -47,6 +48,8 @@ uv sync
 - **marker-pdf**: PDF to markdown conversion
 - **pandas**: Data manipulation
 - **pyarrow**: Parquet file support
+- **tqdm**: Progress bars
+- **torch** / **transformers**: Model backends required by marker-pdf
 
 ## Usage
 
@@ -59,7 +62,8 @@ uv run python run_pdf_to_markdown.py
 ```
 
 This will:
-- Find all PDFs in `data/raw/PDFs/[disease]/FT_Included/` folders
+- Recursively find all PDFs under `data/raw/PDFs_update/`
+- Skip PDFs that have already been converted
 - Convert them to markdown using the marker package
 - Save to `data/processed/markdown/` with metadata headers
 
@@ -68,7 +72,7 @@ This will:
 Extract PGHD-related paragraphs from the markdown files:
 
 ```bash
-python run_pghd_extraction.py
+uv run python run_pghd_extraction.py
 ```
 
 **What it does:**
@@ -85,22 +89,20 @@ python run_pghd_extraction.py
 Analyze the extracted data:
 
 ```bash
-python run_analysis.py
+uv run python run_analysis.py
 ```
 
 **What it does:**
 1. Counts frequency of each matched term
 2. Generates statistics (total papers, matches, unique terms)
-3. Filters results by specific keywords
+3. Counts and filters results by PGHD-specific keywords (patient-generated health data, PGHD)
 4. Saves frequency tables and filtered results
 
 **Output files:**
-- `data/processed/rule_based_extraction/pghd_extraction_results.parquet`
-- `data/processed/rule_based_extraction/pghd_extraction_results.csv`
-- `data/processed/rule_based_extraction/term_frequencies.csv` (from analysis)
-- `data/processed/rule_based_extraction/wearable_filtered_results.csv` (from analysis)
+- `data/processed/rule_based_extraction/term_frequencies.csv`
+- `data/processed/rule_based_extraction/pghd_filtered_results.csv`
 
-**Output schema:**
+**Extraction output schema:**
 | Column | Description |
 |--------|-------------|
 | `paper_pdf_id` | PDF filename (without extension) |
@@ -111,7 +113,7 @@ python run_analysis.py
 
 ## PGHD Terms
 
-The pipeline searches for 33+ terms related to patient-generated health data, including:
+The pipeline searches for 40+ terms related to patient-generated health data, including:
 
 - **Core terms**: patient-generated health data, PGHD
 - **Patient-reported outcomes**: PRO, PROMs, patient-reported data
@@ -150,12 +152,13 @@ filtered_df = filter_by_keywords(
 PDFs should be organized in the following structure:
 
 ```
-data/raw/PDFs/
+data/raw/PDFs_update/
 └── [disease_main_topic]/
     └── [disease_sub_topic]/          # Optional
-        └── FT_Included/              # Or "FT Included" / "FT Include"
-            └── *.pdf
+        └── *.pdf
 ```
+
+PDFs are found recursively, so they may sit in deeper subfolders. Folders with "FT" in their name (e.g. `FT_Included`) are not treated as a sub-topic.
 
 ## Requirements
 
