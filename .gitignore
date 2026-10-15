@@ -1,0 +1,37 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# tmp
+tmp/
+
+# raw data
+data/raw/PDFs/*
+data/raw/PDFs_update/*
+
+# processed markdown files
+data/processed/markdown/*
+
+# writing scripts and resulting docx files
+output/
+scripts/
